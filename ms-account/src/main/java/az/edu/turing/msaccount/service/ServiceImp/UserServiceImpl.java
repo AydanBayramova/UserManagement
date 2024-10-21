@@ -34,4 +34,23 @@ public class UserServiceImpl implements AccountService {
         return userRepository.save(newUser);
     }
 
+    @Override
+    public String login(LoginRequest request) {
+
+        UserEntity user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+
+
+        if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+
+            return jwtUtil.generateToken(user.getUsername());
+        } else {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+    }
+
+
+
 }

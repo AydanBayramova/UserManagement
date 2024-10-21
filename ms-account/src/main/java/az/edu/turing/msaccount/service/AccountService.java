@@ -8,5 +8,7 @@ public interface AccountService {
 
     UserEntity register(RegisterRequest request);
 
+    String login(LoginRequest request);
+
 
 }
