@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,12 +17,10 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-@AllArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private CustomUserDetailsService customUserDetailsService;
-    private JwtUtil jwtUtil;
-
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -31,36 +28,39 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         final String authorizationHeader = request.getHeader("Authorization");
 
-        String username = null;
+        String email = null;
         String jwt = null;
+
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                username = jwtUtil.extractUsername(jwt);
-            } catch (ExpiredJwtException e) {
 
+                email = jwtUtil.extractUsername(jwt);
+            } catch (ExpiredJwtException e) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Expired token");
                 return;
             } catch (Exception e) {
-
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
                 return;
             }
         }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+        // If email is extracted successfully and the user is not already authenticated
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Load user details by email
+            UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(email);
+
+
+            if (jwtUtil.validateToken(jwt, userDetails)) {
+
+                UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken
-                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         }
 
         chain.doFilter(request, response);
     }
-
 }

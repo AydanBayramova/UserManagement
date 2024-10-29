@@ -1,11 +1,16 @@
 package az.edu.turing.msaccount.model.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
 public class LoginRequest {
-    private String username;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    private String email;
+
+    @NotBlank(message = "Password is required")
     private String password;
 }

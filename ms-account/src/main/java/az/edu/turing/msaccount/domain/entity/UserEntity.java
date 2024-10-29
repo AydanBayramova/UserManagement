@@ -1,9 +1,7 @@
 package az.edu.turing.msaccount.domain.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 @Data
@@ -14,7 +12,13 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username;
+    private String fullName;
 
     private String password;
+
+    @Transient
+    private String confirmPassword;
+
+    @Email(message = "Invalid email format")
+    private String email;
 }
